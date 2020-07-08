@@ -1,9 +1,8 @@
-
 local timer = require('gameApp/timer')
 
 local mt = {}
 
-setmetatable(mt,mt)
+setmetatable(mt, mt)
 
 --移动类型，只有target和line
 mt.type = ''
@@ -93,239 +92,256 @@ mt.path = false
 
 --数据处理
 function mt:data()
+    if self.interval < 0.03 then
+        self.interval = 0.03
+    end
 
-	if self.interval < 0.03 then
-		self.interval = 0.03
-	end
+    self.current_speed = self.speed
 
-	self.current_speed = self.speed
+    --起点
+    if self.origin == nil then
+        self.origin = self.unit:GetAbsOrigin()
+    end
 
-	--起点
-	if self.origin == nil then
-		self.origin = self.unit:GetAbsOrigin()
-	end
-	
-	--角度
-	if type(self.angle) == 'number' then
-		local r = self.origin + Vector(5,0,0)
-		local vec = RotatePosition(self.origin, QAngle(0,self.angle,0),r)
-		self.angle = (vec - self.origin):Normalized()
-	end
+    --角度
+    if type(self.angle) == 'number' then
+        local r = self.origin + Vector(5, 0, 0)
+        local vec = RotatePosition(self.origin, QAngle(0, self.angle, 0), r)
+        self.angle = (vec - self.origin):Normalized()
+    end
 
-	--间距
-	if self.dest ~= nil then
-		if type(self.dest) == 'userdata' then
-			self.length = (self.dest - self.unit:GetAbsOrigin()):Length()
-		else
-			self.length = (self.dest:GetAbsOrigin() - self.unit:GetAbsOrigin()):Length()
-		end
-	else
-		self.length = self.distance - self.current_distance
-	end
+    --间距
+    if self.dest ~= nil then
+        if type(self.dest) == 'userdata' then
+            self.length = (self.dest - self.unit:GetAbsOrigin()):Length()
+        else
+            self.length = (self.dest:GetAbsOrigin() - self.unit:GetAbsOrigin()):Length()
+        end
+    else
+        self.length = self.distance - self.current_distance
+    end
 
-	self.init_len = self.length
+    self.init_len = self.length
 
-	--单位组
-	if self.hit and self.hit_group == nil then self.hit_group = {} end
+    --单位组
+    if self.hit and self.hit_group == nil then
+        self.hit_group = {}
+    end
 end
 
 --移动到目标
 function mt:target()
+    local vec = GetGroundPosition(self.unit:GetOrigin(), self.unit)
 
-	local vec = GetGroundPosition(self.unit:GetOrigin(), self.unit)
+    if type(self.dest) == 'userdata' then
+        self.angle = (self.dest - vec):Normalized()
+        self.length = (self.dest - vec):Length()
+    else
+        self.angle = (self.dest:GetAbsOrigin() - vec):Normalized()
+        self.length = (self.dest:GetAbsOrigin() - vec):Length()
+    end
 
-	if type(self.dest) == 'userdata' then
-		self.angle = (self.dest - vec):Normalized()
-		self.length = (self.dest - vec):Length()
-	else
-		self.angle = (self.dest:GetAbsOrigin() - vec):Normalized()
-		self.length = (self.dest:GetAbsOrigin() - vec):Length()
-	end
-
-	return (vec + self.current_speed * self.interval * self.angle)
+    return (vec + self.current_speed * self.interval * self.angle)
 end
 
 --移动一段距离
 function mt:line()
-	--计算距离
-	self.current_distance = self.current_distance + self.current_speed * self.interval
+    --计算距离
+    self.current_distance = self.current_distance + self.current_speed * self.interval
 
-	self.length = self.distance - self.current_distance
+    self.length = self.distance - self.current_distance
 
-	return self.origin + self.current_distance * self.angle
+    return self.origin + self.current_distance * self.angle
 end
 
 --移动
 function mt:move()
-	local mover = self
-	mover:data()
+    local mover = self
+    mover:data()
 
-	local last = mover.origin
+    local last = mover.origin
 
-	mover.unit:AddNewModifier(nil, nil, 'modifier_phased', nil)
+    mover.unit:AddNewModifier(nil, nil, 'modifier_phased', nil)
 
-	if self.stun then
-		mover.unit:AddNewModifier(nil, nil, 'modifier_stunned', nil)
-		mover.unit:AddNewModifier(nil, nil, "modifier_silence", nil)
-	end
+    if self.stun then
+        mover.unit:AddNewModifier(nil, nil, 'modifier_stunned', nil)
+        mover.unit:AddNewModifier(nil, nil, 'modifier_silence', nil)
+    end
 
-	local angle = 0
+    local angle = 0
 
-	timer
-	{
-		interval = mover.interval,
-		onInterval = function( self )
-			
-			--判断单位存在
-			if AMHC:IsAlive(mover.unit) ~= true then
-				mover:remove()
-				self:remove()
-				return
-			end
+    timer {
+        interval = mover.interval,
+        onInterval = function(self)
+            --判断单位存在
+            if AMHC:IsAlive(mover.unit) ~= true then
+                mover:remove()
+                self:remove()
+                return
+            end
 
-			if mover.dest ~= nil and type(mover.dest) == 'table' then
-				if AMHC:IsAlive(mover.dest) ~= true then
-					mover:remove()
-					self:remove()
-					return
-				end
-				if mover.length < mover.min_length then
-					mover:finish()
-					mover:remove()
-					self:remove()
-					return
-				end
-			elseif mover.dest ~= nil and type(mover.dest) == 'userdata' then
-				if mover.length < mover.min_length then
-					mover:finish()
-					mover:remove()
-					self:remove()
-					return
-				end
-			elseif mover.type == 'line' then
-				--判断移动距离
-				if mover.current_distance >= mover.distance then
-					mover:finish()
-					mover:remove()
-					self:remove()
-					return
-				end
-			end
+            if mover.dest ~= nil and type(mover.dest) == 'table' then
+                if AMHC:IsAlive(mover.dest) ~= true then
+                    mover:remove()
+                    self:remove()
+                    return
+                end
+                if mover.length < mover.min_length then
+                    mover:finish()
+                    mover:remove()
+                    self:remove()
+                    return
+                end
+            elseif mover.dest ~= nil and type(mover.dest) == 'userdata' then
+                if mover.length < mover.min_length then
+                    mover:finish()
+                    mover:remove()
+                    self:remove()
+                    return
+                end
+            elseif mover.type == 'line' then
+                --判断移动距离
+                if mover.current_distance >= mover.distance then
+                    mover:finish()
+                    mover:remove()
+                    self:remove()
+                    return
+                end
+            end
 
-			--判断持续时间
-			if mover.duration ~= -1 then
-				if self.time >= mover.duration then
-					mover:finish()
-					mover:remove()
-					self:remove()
-					return
-				end
-			end
+            --判断持续时间
+            if mover.duration ~= -1 then
+                if self.time >= mover.duration then
+                    mover:finish()
+                    mover:remove()
+                    self:remove()
+                    return
+                end
+            end
 
-			--加速度
-			mover.current_speed = mover.speed + mover.a_speed * self.time
+            --加速度
+            mover.current_speed = mover.speed + mover.a_speed * self.time
 
-			--计算vector
-			local vec = nil
-			if mover.type == 'target' then
-				vec = mover:target()
-			elseif mover.type == 'line' then
-				vec = mover:line()
-			end
+            --计算vector
+            local vec = nil
+            if mover.type == 'target' then
+                vec = mover:target()
+            elseif mover.type == 'line' then
+                vec = mover:line()
+            end
 
-			if mover.dest == nil then
-				angle = angle + 180/((mover.distance/mover.current_speed)/mover.interval)
-			else
-				angle = angle + 180/((mover.init_len/mover.current_speed)/mover.interval)
-			end
-			
-			if angle > 180 then angle = 180 end
-			
-			--计算高度
-			local h = mover.max_height * math.sin(math.rad(angle))
+            if mover.dest == nil then
+                angle = angle + 180 / ((mover.distance / mover.current_speed) / mover.interval)
+            else
+                angle = angle + 180 / ((mover.init_len / mover.current_speed) / mover.interval)
+            end
 
-			--判断是否可通行
-			if not mover.path then
-				if not GridNav:CanFindPath(last,vec) then
-					mover:finish()
-					mover:remove()
-					self:remove()
-					return
-				end
-			end
+            if angle > 180 then
+                angle = 180
+            end
 
-			last = vec
+            --计算高度
+            local h = mover.max_height * math.sin(math.rad(angle))
 
-			mover.unit:SetAbsOrigin(vec + mover.unit:GetUpVector()*mover.min_height + mover.unit:GetUpVector()*h)
+            --判断是否可通行
+            if not mover.path then
+                if not GridNav:CanFindPath(last, vec) then
+                    mover:finish()
+                    mover:remove()
+                    self:remove()
+                    return
+                end
+            end
 
-			if mover.onMove then mover:onMove() end
+            last = vec
 
-			--碰撞
-			if mover.hit then
-				local group = FindUnitsInRadius(mover.unit:GetTeamNumber(), mover.unit:GetOrigin(), nil, mover.hit_area, mover.teams, mover.types, mover.flags, FIND_CLOSEST, true)
-				for k,v in pairs(group) do
+            mover.unit:SetAbsOrigin(vec + mover.unit:GetUpVector() * mover.min_height + mover.unit:GetUpVector() * h)
 
-					if mover.hit_repeat then
+            if mover.onMove then
+                mover:onMove()
+            end
 
-						--重复碰撞
-						local remove = nil
-						if mover.onHit then remove = mover:onHit(v) end
-						if remove == true then
-							mover:finish()
-							mover:remove()
-							self:remove()
-							return
-						end
-					else
+            --碰撞
+            if mover.hit then
+                local group =
+                    FindUnitsInRadius(
+                    mover.unit:GetTeamNumber(),
+                    mover.unit:GetOrigin(),
+                    nil,
+                    mover.hit_area,
+                    mover.teams,
+                    mover.types,
+                    mover.flags,
+                    FIND_CLOSEST,
+                    true
+                )
+                for k, v in pairs(group) do
+                    if mover.hit_repeat then
+                        --重复碰撞
+                        local remove = nil
+                        if mover.onHit then
+                            remove = mover:onHit(v)
+                        end
+                        if remove == true then
+                            mover:finish()
+                            mover:remove()
+                            self:remove()
+                            return
+                        end
+                    else
+                        --非重复碰撞
+                        if vlua.find(mover.hit_group, v) == nil then
+                            local remove = nil
+                            if mover.onHit then
+                                remove = mover:onHit(v)
+                            end
+                            if remove == true then
+                                mover:finish()
+                                mover:remove()
+                                self:remove()
+                                return
+                            end
 
-						--非重复碰撞
-						if vlua.find(mover.hit_group,v) == nil then
-
-							local remove = nil
-							if mover.onHit then remove = mover:onHit(v) end
-							if remove == true then
-								mover:finish()
-								mover:remove()
-								self:remove()
-								return
-							end
-
-							table.insert(mover.hit_group,v)
-						end
-					end
-				end
-			end
-		end
-	}
+                            table.insert(mover.hit_group, v)
+                        end
+                    end
+                end
+            end
+        end
+    }
 end
 
 --移动结束
 function mt:remove()
-	if self.onRemove then self:onRemove() end
-	if IsValidEntity(self.unit) and self.unit:IsAlive() then
-		self.unit:AddNewModifier(nil, nil, 'modifier_phased', {duration = 0.1})
-		self.unit:RemoveModifierByName("modifier_stunned")
-		self.unit:RemoveModifierByName("modifier_silence")
-	end
+    if self.onRemove then
+        self:onRemove()
+    end
+    if IsValidEntity(self.unit) and self.unit:IsAlive() then
+        self.unit:AddNewModifier(nil, nil, 'modifier_phased', {duration = 0.1})
+        self.unit:RemoveModifierByName('modifier_stunned')
+        self.unit:RemoveModifierByName('modifier_silence')
+    end
 end
 
 --正常完成
 function mt:finish()
-	if self.onFinish then self:onFinish() end
+    if self.onFinish then
+        self:onFinish()
+    end
 end
 
 --创建
-function mt:create( data )
-	return Merge(data,self)
+function mt:create(data)
+    return Merge(data, self)
 end
 
 --发动
 function mt:run()
-	if AMHC:IsAlive(self.unit) ~= true then
-		return nil
-	end
+    if AMHC:IsAlive(self.unit) ~= true then
+        return nil
+    end
 
-	self:move()
+    self:move()
 end
 
 return mt

@@ -6,7 +6,6 @@
     放在 scripts/vscripts 文件夹中
     并在任何单位出生之前 require 'equilibrium_constant' 即可
 ]]
-
 -- 以下数值修改为自己想要的平衡性常数即可
 local HP_PER_STR = 20 -- 力量 - 血量
 local HP_REGEN_PER_STR = 0 -- 力量 - 生命恢复
@@ -46,12 +45,12 @@ function equilibrium_constant:DeclareFunctions()
         MODIFIER_PROPERTY_PHYSICAL_ARMOR_BONUS,
         MODIFIER_PROPERTY_ATTACKSPEED_BONUS_CONSTANT,
         MODIFIER_PROPERTY_MOVESPEED_MAX,
-        MODIFIER_PROPERTY_MOVESPEED_LIMIT,
+        MODIFIER_PROPERTY_MOVESPEED_LIMIT
     }
     return funcs
 end
 
-function equilibrium_constant:GetModifierHealthBonus( params )
+function equilibrium_constant:GetModifierHealthBonus(params)
     if IsServer() then
         local owner = self:GetParent()
         local str = owner:GetStrength()
@@ -60,7 +59,7 @@ function equilibrium_constant:GetModifierHealthBonus( params )
     end
 end
 
-function equilibrium_constant:GetModifierManaBonus( params )
+function equilibrium_constant:GetModifierManaBonus(params)
     if IsServer() then
         local owner = self:GetParent()
         local int = owner:GetIntellect()
@@ -69,7 +68,7 @@ function equilibrium_constant:GetModifierManaBonus( params )
     end
 end
 
-function equilibrium_constant:GetModifierAttackSpeedBonus_Constant( params )
+function equilibrium_constant:GetModifierAttackSpeedBonus_Constant(params)
     if IsServer() then
         local owner = self:GetParent()
         local agi = owner:GetAgility()
@@ -78,7 +77,7 @@ function equilibrium_constant:GetModifierAttackSpeedBonus_Constant( params )
     end
 end
 
-function equilibrium_constant:GetModifierPhysicalArmorBonus( params )
+function equilibrium_constant:GetModifierPhysicalArmorBonus(params)
     if IsServer() then
         local owner = self:GetParent()
         local agi = owner:GetAgility()
@@ -87,7 +86,7 @@ function equilibrium_constant:GetModifierPhysicalArmorBonus( params )
     end
 end
 
-function equilibrium_constant:GetModifierConstantManaRegen( params )
+function equilibrium_constant:GetModifierConstantManaRegen(params)
     if IsServer() then
         local owner = self:GetParent()
         local int = owner:GetIntellect()
@@ -96,7 +95,7 @@ function equilibrium_constant:GetModifierConstantManaRegen( params )
     end
 end
 
-function equilibrium_constant:GetModifierConstantHealthRegen( params )
+function equilibrium_constant:GetModifierConstantHealthRegen(params)
     if IsServer() then
         local owner = self:GetParent()
         local str = owner:GetStrength()
@@ -113,31 +112,30 @@ function equilibrium_constant:GetAttributes()
     return MODIFIER_ATTRIBUTE_PERMANENT + MODIFIER_ATTRIBUTE_IGNORE_INVULNERABLE
 end
 
-
-
-function equilibrium_constant:GetModifierMoveSpeed_Max( params )
+function equilibrium_constant:GetModifierMoveSpeed_Max(params)
     return MAX_MS
 end
 
-function equilibrium_constant:GetModifierMoveSpeed_Limit( params )
+function equilibrium_constant:GetModifierMoveSpeed_Limit(params)
     return MAX_MS
 end
 
 function equilibrium_constant:x_Start()
-    ListenToGameEvent( "npc_spawned", Dynamic_Wrap( equilibrium_constant, "x_OnNPCSpawned" ), self )
+    ListenToGameEvent('npc_spawned', Dynamic_Wrap(equilibrium_constant, 'x_OnNPCSpawned'), self)
 end
 
 function equilibrium_constant:x_OnNPCSpawned(keys)
-    print("test")
-    local hSpawnedUnit = EntIndexToHScript( keys.entindex )
-    if not hSpawnedUnit:HasModifier("equilibrium_constant") and
-        IsValidEntity(hSpawnedUnit) and
-        hSpawnedUnit.GetAgility and hSpawnedUnit.GetIntellect and hSpawnedUnit.GetStrength
-        then
-        hSpawnedUnit:AddNewModifier(hSpawnedUnit,nil,"equilibrium_constant",{})
+    print('test')
+    local hSpawnedUnit = EntIndexToHScript(keys.entindex)
+    if
+        not hSpawnedUnit:HasModifier('equilibrium_constant') and IsValidEntity(hSpawnedUnit) and hSpawnedUnit.GetAgility and
+            hSpawnedUnit.GetIntellect and
+            hSpawnedUnit.GetStrength
+     then
+        hSpawnedUnit:AddNewModifier(hSpawnedUnit, nil, 'equilibrium_constant', {})
     end
 end
 
-LinkLuaModifier("equilibrium_constant","equilibrium_constant.lua",LUA_MODIFIER_MOTION_NONE)
+LinkLuaModifier('equilibrium_constant', 'equilibrium_constant.lua', LUA_MODIFIER_MOTION_NONE)
 GameRules.AttributeBonusFix = equilibrium_constant()
 GameRules.AttributeBonusFix:x_Start()

@@ -1,19 +1,18 @@
-
 ----------------
 --这里实现KV接口
 ----------------
 
 --匹配伤害类型
-function AMHC:DamageType( _type )
-	if _type == "DAMAGE_TYPE_MAGICAL" then
-		return DAMAGE_TYPE_MAGICAL
-	elseif _type == "DAMAGE_TYPE_PHYSICAL" then
-		return DAMAGE_TYPE_PHYSICAL
-	elseif _type == "DAMAGE_TYPE_PURE" then
-		return DAMAGE_TYPE_PURE
-	else
-		error("AMHC:Damage:DamageType is error",2)
-	end
+function AMHC:DamageType(_type)
+    if _type == 'DAMAGE_TYPE_MAGICAL' then
+        return DAMAGE_TYPE_MAGICAL
+    elseif _type == 'DAMAGE_TYPE_PHYSICAL' then
+        return DAMAGE_TYPE_PHYSICAL
+    elseif _type == 'DAMAGE_TYPE_PURE' then
+        return DAMAGE_TYPE_PURE
+    else
+        error('AMHC:Damage:DamageType is error', 2)
+    end
 end
 
 ----------------------------------------------------------------------------------------------------------
@@ -26,21 +25,20 @@ end
 -- 	"DamageType"	"DAMAGE_TYPE_PHYSICAL"	//伤害类型
 -- 	"Scale"			"%scale"				//可选，伤害比例
 -- }
-function DamageTarget( keys )
-	local caster = keys.caster
-	local target = keys.target
+function DamageTarget(keys)
+    local caster = keys.caster
+    local target = keys.target
 
-	if target == caster then
-		if keys.attacker ~= nil then
-			target = keys.attacker
-		else
-			return
-		end
-	end
+    if target == caster then
+        if keys.attacker ~= nil then
+            target = keys.attacker
+        else
+            return
+        end
+    end
 
-	AMHC:Damage( caster,target,keys.Damage,AMHC:DamageType(keys.DamageType),keys.Scale )
+    AMHC:Damage(caster, target, keys.Damage, AMHC:DamageType(keys.DamageType), keys.Scale)
 end
-
 
 ----------------------------------------------------------------------------------------------------------
 --伤害AOE
@@ -60,24 +58,23 @@ end
 --         "Radius"    "500"
 --     }
 -- }
-function DamageAOE( keys )
-	local caster = keys.caster
-	local group = keys.target_entities
+function DamageAOE(keys)
+    local caster = keys.caster
+    local group = keys.target_entities
 
-	for k,v in pairs(group) do
-		caster:Damage(v,keys.Damage,AMHC:DamageType(keys.DamageType),keys.Scale)
-	end
+    for k, v in pairs(group) do
+        caster:Damage(v, keys.Damage, AMHC:DamageType(keys.DamageType), keys.Scale)
+    end
 end
-
 
 ----------------------------------------------------------------------------------------------------------
 --增大模型
-function AddModelScale( keys )
-	local target = keys.target
+function AddModelScale(keys)
+    local target = keys.target
 
-	if target == nil then
-		target = keys.caster
-	end
+    if target == nil then
+        target = keys.caster
+    end
 
-	AMHC:AddModelScale( target,tonumber(keys.Scale),tonumber(keys.Duration) )
+    AMHC:AddModelScale(target, tonumber(keys.Scale), tonumber(keys.Duration))
 end
