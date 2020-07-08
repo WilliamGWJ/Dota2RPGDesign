@@ -1,0 +1,1 @@
+<root>        <styles>                <include src="file://{resources}/styles/custom_game/custom_loading_screen.css"/>        </styles>        <Panel>                <Image id="back" class="background" src="file://{images}/custom_game/shao.jpg"/>        </Panel></root>
